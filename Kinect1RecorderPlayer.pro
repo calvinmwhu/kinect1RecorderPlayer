@@ -23,7 +23,9 @@ SOURCES += main.cpp\
     playlistmodel.cpp \
     videowidget.cpp \
     player.cpp \
-    recorder.cpp
+    recorder.cpp \
+    kinectdetector.cpp \
+#    comutilities.cpp
 
 HEADERS  += kinect1recoderplayer.h \
     histogramwidget.h \
@@ -59,7 +61,10 @@ HEADERS  += kinect1recoderplayer.h \
     rapidjson/stringbuffer.h \
     rapidjson/writer.h \
     player.h \
-    recorder.h
+    recorder.h \
+    kinectdetector.h \
+    comutilities.h \
+   # stringconverter.h
 
 win32:CONFIG(release, debug|release): LIBS += "C:/Program Files/Microsoft SDKs/Kinect/v1.8/lib/amd64/Kinect10.lib"
 else:win32:CONFIG(debug, debug|release): LIBS += "C:/Program Files/Microsoft SDKs/Kinect/v1.8/lib/amd64/Kinect10.lib"

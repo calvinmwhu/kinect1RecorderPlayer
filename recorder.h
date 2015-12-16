@@ -18,12 +18,15 @@ class Recorder : public QWidget
 public:
     explicit Recorder(QWidget *parent = 0);
 
+private slots:
+    void detectCamera();
+
 private:
     QPushButton* detectCameraButton;
     QPushButton* recordButton;
     QPushButton* stopButton;
     QPushButton* uploadButton;
-    QListView* camera_view;
+    QListView* logView;
 
 };
 
