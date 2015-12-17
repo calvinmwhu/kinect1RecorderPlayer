@@ -1,6 +1,9 @@
 #include <QGridLayout>
 #include <QtDebug>
 #include <QSharedPointer>
+#include <iostream>
+#include <QStringList>
+#include <QStringListModel>
 
 #include "recorder.h"
 #include "kinectdetector.h"
@@ -31,7 +34,8 @@ Recorder::Recorder(QWidget *parent)
     uploadButton->setEnabled(false);
 
     logView = new QListView();
-    //QLabel* camera_label = new QLabel(tr("cameras"));
+    QStringListModel *model = new QStringListModel();
+    logView->setModel(model);
 
     QGridLayout* gridLayout = new QGridLayout();
     gridLayout->addWidget(detectCameraButton);
@@ -39,17 +43,75 @@ Recorder::Recorder(QWidget *parent)
     gridLayout->addWidget(stopButton);
     gridLayout->addWidget(uploadButton);
 
-   // gridLayout->addWidget(camera_label, 1, 4);
     gridLayout->addWidget(logView, 0, 2, 4, 1);
     setLayout(gridLayout);
+
+    status = Status::DETECTING;
+    statusUpdated();
+
 }
 
 void Recorder::detectCamera(){
-    qDebug() << "detectCamera clicked";
     QSharedPointer<KinectDetector> detector = QSharedPointer<KinectDetector>();
-    detector->detectCamera();
+    auto info = detector->detectCamera();
+    clearLogView();
+    if(info.size()==0) {
+        appendToLogView("No Kinect camera detected!");
+    }else{
+        QString summary;
+        summary.sprintf("%d Kinect Cameras avaliable: ", info.size());
+        appendToLogView(summary);
+        int i=1;
+        for(auto it=info.begin(); it!=info.end(); ++it) {
+            QString id = QString::fromStdString(it->first);
+            QString status = QString::fromStdString(it->second);
+            QString line;
+            line.sprintf("camera-%d id: ", i);
+            line.append(id);
+            line.append("   status: ");
+            line.append(status);
+            appendToLogView(line);
+            i++;
+        }
+        status = Status::READY;
+        statusUpdated();
+    }
 }
 
+void Recorder::clearLogView() {
+    logView->model()->removeRows(0, logView->model()->rowCount());
+}
+
+void Recorder::appendToLogView(QVariant data) {
+    int row = logView->model()->rowCount();
+    logView->model()->insertRow(row);
+    QModelIndex index = logView->model()->index(row,0);
+    logView->model()->setData(index, data);
+}
+
+void Recorder::statusUpdated() {
+    switch (status) {
+    case Status::DETECTING:
+        detectCameraButton->setEnabled(true);
+        recordButton->setEnabled(false);
+        stopButton->setEnabled(false);
+        uploadButton->setEnabled(false);
+        break;
+    case Status::READY:
+        detectCameraButton->setEnabled(false);
+        recordButton->setEnabled(true);
+        stopButton->setEnabled(false);
+        uploadButton->setEnabled(false);
+        break;
+    case Status::STOPPING:
+    case Status::COMPRESSING:
+        detectCameraButton->setEnabled(false);
+        recordButton->setEnabled(false);
+        stopButton->setEnabled(false);
+        uploadButton->setEnabled(false);
+        break;
+    }
+}
 
 
 

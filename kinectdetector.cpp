@@ -24,7 +24,6 @@ SS KinectDetector::detectCamera(){
         cameraInfo[id] = status;
     }
     return cameraInfo;
-
 }
 
 
