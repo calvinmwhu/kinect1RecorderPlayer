@@ -60,7 +60,7 @@ void KinectCapturer::extractFrames() {
         if (WAIT_OBJECT_0 + 1 == ret) {
             qDebug()<<"get frame: "<<frame_count_;
             ResetEvent(m_hLastFrameEvent);
-            convertFrameToPointCloud();
+//            convertFrameToPointCloud();
         }
         QCoreApplication::processEvents();
     }
@@ -85,7 +85,7 @@ QString KinectCapturer::connectionStatus(){
 void KinectCapturer::start() {
     qDebug()<<"Worker::start get called from: "<<QThread::currentThreadId();
 
-//    initializeSensor();
+    initializeSensor();
     QString startMsg;
     startMsg.sprintf("Camera-%d recording", sensorIdx_);
     QString endMsg;

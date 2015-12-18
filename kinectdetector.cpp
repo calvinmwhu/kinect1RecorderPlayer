@@ -12,7 +12,6 @@ void KinectDetector::detectCamera(){
         CComPtr<INuiSensor> sensor = nullptr;
         COM_RESULT_CHECK(NuiCreateSensorByIndex(i, &sensor));
         KinectCapturer* kinectCapturer = new KinectCapturer(i,sensor);
-//        COM_RESULT_CHECK(kinectCapturer->initializeSensor());
         kinectCapturers_.push_back(kinectCapturer);
     }
     emit cameraDetected();
