@@ -35,7 +35,7 @@ void KinectCapturer::initializeSensor() {
     // initialize sensor
     initingMsg.sprintf("initializing Camera-%d ... ", sensorIdx_);
     qDebug()<<initingMsg;
-    emit initialization(initingMsg);
+//    emit initialization(initingMsg);
 
 //    // initialization logic:
     COM_RESULT_CHECK(sensor_->NuiInitialize(NUI_INITIALIZE_FLAG_USES_COLOR | NUI_INITIALIZE_FLAG_USES_DEPTH_AND_PLAYER_INDEX));
@@ -61,7 +61,7 @@ void KinectCapturer::initializeSensor() {
 
     initedMsg.sprintf("Camera-%d initialized", sensorIdx_);
     qDebug()<<initedMsg;
-    emit initialization(initedMsg);
+//    emit initialization(initedMsg);
 }
 
 void KinectCapturer::extractFrames() {
@@ -71,9 +71,9 @@ void KinectCapturer::extractFrames() {
         if (WAIT_OBJECT_0 == ret)
             break;
         if (WAIT_OBJECT_0 + 1 == ret) {
-//            qDebug()<<"get frame: "<<frame_count_;
+            qDebug()<<"get frame: "<<frame_count_;
             ResetEvent(m_hLastFrameEvent);
-//            convertFrameToPointCloud();
+            convertFrameToPointCloud();
         }
         QCoreApplication::processEvents();
     }
@@ -103,9 +103,6 @@ void KinectCapturer::start() {
     qDebug()<<"capturer::start get called from: "<<QThread::currentThreadId();
     QString startMsg;
     QString endMsg;
-
-//    initializeSensor();
-
     // begin recording/extracting frames
     startMsg.sprintf("Camera-%d recording in progress ...", sensorIdx_);
     emit started(startMsg);

@@ -78,16 +78,17 @@ void Recorder::cameraDetected() {
         for(int i=0; i<capturers.size(); i++) {
             KinectCapturer* capturer = capturers[i];
             if(capturer->connected()) {
-                capturer->initializeSensor();
                 QThread* capturerRunner = new QThread(this);
-                capturer->moveToThread(capturerRunner);
-                connect(capturerRunner, SIGNAL(started()), capturer, SLOT(start()));
+                capturer->initializeSensor();
 
+                capturer->moveToThread(capturerRunner);
                 connect(capturer, SIGNAL(initialization(QString)), SLOT(cameraInit(QString)));
                 connect(capturer, SIGNAL(started(QString)), SLOT(recordingStarted(QString)));
                 connect(capturer, SIGNAL(finished(QString)), capturerRunner, SLOT(quit()));
                 connect(capturer, SIGNAL(finished(QString)), SLOT(recordingStopped(QString)));
                 connect(stopButton, SIGNAL(clicked()), capturer, SLOT(finish()));
+                connect(capturerRunner, SIGNAL(started()), capturer, SLOT(start()));
+
                 capturerRunners.push_back(capturerRunner);
             }
         }
