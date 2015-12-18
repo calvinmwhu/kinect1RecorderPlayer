@@ -147,7 +147,6 @@ Player::Player(QWidget *parent)
         addToPlaylist(arguments);
 }
 
-
 void Player::open()
 {
     QStringList fileNames = QFileDialog::getOpenFileNames(this, tr("Open Files"));

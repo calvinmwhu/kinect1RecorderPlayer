@@ -2,29 +2,34 @@
 #include "comutilities.h"
 #include "AtlConv.h"
 
-KinectDetector::KinectDetector() {
-
+KinectDetector::KinectDetector(QObject* parent) : QObject(parent) {
 }
 
-SS KinectDetector::detectCamera(){
+void KinectDetector::detectCamera(){
     int numSensors;
-    SS cameraInfo;
     COM_RESULT_CHECK(NuiGetSensorCount(&numSensors));
     for(int i=0; i<numSensors; i++) {
         CComPtr<INuiSensor> sensor = nullptr;
         COM_RESULT_CHECK(NuiCreateSensorByIndex(i, &sensor));
-        CW2A pszConverted(sensor->NuiDeviceConnectionId());
-        std::string id(pszConverted);
-        std::string status;
-        if(sensor->NuiStatus() == S_OK) {
-            status = "Connected";
-        }else{
-            status = TO_STRING(sensor->NuiStatus());
-        }
-        cameraInfo[id] = status;
+        KinectCapturer* kinectCapturer = new KinectCapturer(i,sensor);
+        kinectCapturers_.push_back(kinectCapturer);
     }
-    return cameraInfo;
+    emit cameraDetected();
 }
+
+QVector<KinectCapturer*> KinectDetector::getCapturers() {
+    return kinectCapturers_;
+}
+
+CameraInfo KinectDetector::cameraInfo() {
+    CameraInfo info;
+    for(int i=0; i<kinectCapturers_.size(); i++){
+        info.insert(kinectCapturers_[i]->connectionId(), kinectCapturers_[i]->connectionStatus());
+    }
+    return info;
+}
+
+
 
 
 

@@ -4,6 +4,9 @@
 #include <QtWidgets>
 #include <QMap>
 #include <QString>
+#include <QThread>
+#include "kinectdetector.h"
+
 
 QT_BEGIN_NAMESPACE
 class QListView;
@@ -22,7 +25,10 @@ public:
     explicit Recorder(QWidget *parent = 0);
 
 private slots:
-    void detectCamera();
+    void cameraDetected();
+//    void startRecording();
+    void recordingStarted(QString msg);
+    void recordingStopped(QString msg);
 
 private:
     QPushButton* detectCameraButton;
@@ -30,13 +36,15 @@ private:
     QPushButton* stopButton;
     QPushButton* uploadButton;
     QListView* logView;
+    KinectDetector *kinectDetector_;
+    KinectCapturer *kinectCapturer_;
+    QVector<QThread*> capturerRunners;
     Status status;
 
 private:
     void clearLogView();
     void appendToLogView(QVariant data);
     void statusUpdated();
-
 };
 
 #endif // RECORDER

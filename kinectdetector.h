@@ -1,19 +1,28 @@
 #ifndef KINECTDETECTOR
 #define KINECTDETECTOR
 
-#include <atlbase.h>
-#include <map>
-#include <iostream>
-#include <string>
-#include <memory>
-#include "NuiApi.h"
+#include <QMap>
+#include <QVector>
+#include "kinectcapturer.h"
 
-typedef std::map<std::string,std::string> SS;
+typedef QMap<QString, QString> CameraInfo;
 
-class KinectDetector {
+class KinectDetector : public QObject {
+    Q_OBJECT
+
+public slots:
+    void detectCamera();
+
+signals:
+    void cameraDetected();
+
 public:
-    explicit KinectDetector();
-    SS detectCamera();
+    explicit KinectDetector(QObject* parent);
+    QVector<KinectCapturer*> getCapturers();
+    CameraInfo cameraInfo();
+
+private:
+    QVector<KinectCapturer*> kinectCapturers_;
 };
 
 #endif // KINECTDETECTOR

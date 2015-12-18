@@ -6,7 +6,6 @@
 #include <QStringListModel>
 
 #include "recorder.h"
-#include "kinectdetector.h"
 
 Recorder::Recorder(QWidget *parent)
     : QWidget(parent)
@@ -14,19 +13,21 @@ Recorder::Recorder(QWidget *parent)
     detectCameraButton = new QPushButton("Detect Camera");
     detectCameraButton->setGeometry(QRect(QPoint(100, 100),
     QSize(200, 50)));
-    connect(detectCameraButton, SIGNAL(clicked()), SLOT(detectCamera()));
+
+    kinectDetector_ = new KinectDetector(this);
+    connect(kinectDetector_, SIGNAL(cameraDetected()), SLOT(cameraDetected()));
+    connect(detectCameraButton, SIGNAL(clicked()), kinectDetector_, SLOT(detectCamera()));
 
     recordButton = new QPushButton("Record");
     recordButton->setGeometry(QRect(QPoint(100, 100),
     QSize(200, 50)));
     recordButton->setEnabled(false);
-
+//    connect(recordButton, SIGNAL(clicked()), SLOT(startRecording()));
 
     stopButton = new QPushButton("Stop");
     stopButton->setGeometry(QRect(QPoint(100, 100),
     QSize(200, 50)));
     stopButton->setEnabled(false);
-
 
     uploadButton = new QPushButton("Upload");
     uploadButton->setGeometry(QRect(QPoint(100, 100),
@@ -51,10 +52,8 @@ Recorder::Recorder(QWidget *parent)
 
 }
 
-void Recorder::detectCamera(){
-    QSharedPointer<KinectDetector> detector = QSharedPointer<KinectDetector>();
-    auto info = detector->detectCamera();
-    clearLogView();
+void Recorder::cameraDetected() {
+    CameraInfo info = kinectDetector_->cameraInfo();
     if(info.size()==0) {
         appendToLogView("No Kinect camera detected!");
     }else{
@@ -63,19 +62,55 @@ void Recorder::detectCamera(){
         appendToLogView(summary);
         int i=1;
         for(auto it=info.begin(); it!=info.end(); ++it) {
-            QString id = QString::fromStdString(it->first);
-            QString status = QString::fromStdString(it->second);
             QString line;
             line.sprintf("camera-%d id: ", i);
-            line.append(id);
+            line.append(it.key());
             line.append("   status: ");
-            line.append(status);
+            line.append(it.value());
             appendToLogView(line);
             i++;
         }
         status = Status::READY;
         statusUpdated();
     }
+    if(status == Status::READY) {
+        QVector<KinectCapturer*> capturers = kinectDetector_->getCapturers();
+        for(int i=0; i<capturers.size(); i++) {
+            KinectCapturer* capturer = capturers[i];
+            QThread* capturerRunner = new QThread(this);
+            capturer->moveToThread(capturerRunner);
+            connect(recordButton, SIGNAL(clicked()), capturerRunner, SLOT(start()));
+            connect(recordButton, SIGNAL(clicked()), capturer, SLOT(start()));
+
+            connect(capturer, SIGNAL(started(QString)), SLOT(recordingStarted(QString)));
+            connect(capturer, SIGNAL(finished(QString)), capturerRunner, SLOT(quit()));
+            connect(capturer, SIGNAL(finished(QString)), SLOT(recordingStopped(QString)));
+            connect(stopButton, SIGNAL(clicked()), capturer, SLOT(finish()));
+            capturerRunners.push_back(capturerRunner);
+        }
+    }
+}
+
+//void Recorder::startRecording() {
+//    qDebug()<<"From main thread: "<<QThread::currentThreadId();
+//    for(int i=0; i<capturerRunners.size(); i++) {
+//        capturerRunners[i]->start();
+//    }
+//    status = Status::RECORDING;
+//    statusUpdated();
+//}
+
+void Recorder::recordingStarted(QString msg) {
+    status = Status::RECORDING;
+    statusUpdated();
+    appendToLogView(msg);
+}
+
+void Recorder::recordingStopped(QString msg) {
+//    qDebug()<<"From main thread: "<<QThread::currentThreadId();
+    appendToLogView(msg);
+    status = Status::STOPPING;
+    statusUpdated();
 }
 
 void Recorder::clearLogView() {
@@ -103,6 +138,12 @@ void Recorder::statusUpdated() {
         stopButton->setEnabled(false);
         uploadButton->setEnabled(false);
         break;
+    case Status::RECORDING:
+        detectCameraButton->setEnabled(false);
+        recordButton->setEnabled(false);
+        stopButton->setEnabled(true);
+        uploadButton->setEnabled(false);
+        break;
     case Status::STOPPING:
     case Status::COMPRESSING:
         detectCameraButton->setEnabled(false);
@@ -112,6 +153,3 @@ void Recorder::statusUpdated() {
         break;
     }
 }
-
-
-

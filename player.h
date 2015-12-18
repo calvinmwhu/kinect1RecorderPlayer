@@ -32,7 +32,6 @@ class Player : public QWidget
 public:
     explicit Player(QWidget *parent = 0);
 
-
 signals:
     void fullScreenChanged(bool fullScreen);
 
