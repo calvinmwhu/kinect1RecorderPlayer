@@ -26,8 +26,16 @@ public:
     KinectCapturer(int sensorIdx, const CComPtr<INuiSensor>& sensor);
     QString connectionId();
     QString connectionStatus();
+    bool connected();
+    void initializeSensor();
+
+    void enter()
+        { ::EnterCriticalSection(&m_rep); }
+    void leave()
+        { ::LeaveCriticalSection(&m_rep); }
 
 signals:
+    void initialization(QString msg);
     void started(QString msg);
     void finished(QString msg);
 
@@ -37,8 +45,8 @@ public slots:
 
 private:
     void	convertFrameToPointCloud();
-    HRESULT initializeSensor();
-    void extractFrames();
+    void    extractFrames();
+    void	cleanUp();
 
 private:
     int sensorIdx_;
@@ -64,6 +72,9 @@ private:
     BYTE *depth_frame;
     BYTE *color_buffer;
     BYTE *depth_buffer;
+
+    // synchronization
+    CRITICAL_SECTION m_rep;
 };
 
 #endif // KINECTCAPTURER

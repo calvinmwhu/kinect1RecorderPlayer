@@ -21,8 +21,8 @@ Recorder::Recorder(QWidget *parent)
     recordButton = new QPushButton("Record");
     recordButton->setGeometry(QRect(QPoint(100, 100),
     QSize(200, 50)));
-    recordButton->setEnabled(false);
-//    connect(recordButton, SIGNAL(clicked()), SLOT(startRecording()));
+    recordButton->setEnabled(false);    
+    connect(recordButton, SIGNAL(clicked()), SLOT(startRecording()));
 
     stopButton = new QPushButton("Stop");
     stopButton->setGeometry(QRect(QPoint(100, 100),
@@ -60,7 +60,7 @@ void Recorder::cameraDetected() {
         QString summary;
         summary.sprintf("%d Kinect Cameras avaliable: ", info.size());
         appendToLogView(summary);
-        int i=1;
+        int i=0;
         for(auto it=info.begin(); it!=info.end(); ++it) {
             QString line;
             line.sprintf("camera-%d id: ", i);
@@ -77,20 +77,32 @@ void Recorder::cameraDetected() {
         QVector<KinectCapturer*> capturers = kinectDetector_->getCapturers();
         for(int i=0; i<capturers.size(); i++) {
             KinectCapturer* capturer = capturers[i];
-            QThread* capturerRunner = new QThread(this);
-            capturer->moveToThread(capturerRunner);
-            connect(recordButton, SIGNAL(clicked()), capturerRunner, SLOT(start()));
-            connect(recordButton, SIGNAL(clicked()), capturer, SLOT(start()));
+            if(capturer->connected()) {
+                capturer->initializeSensor();
+                QThread* capturerRunner = new QThread(this);
+                capturer->moveToThread(capturerRunner);
+                connect(capturerRunner, SIGNAL(started()), capturer, SLOT(start()));
 
-            connect(capturer, SIGNAL(started(QString)), SLOT(recordingStarted(QString)));
-            connect(capturer, SIGNAL(finished(QString)), capturerRunner, SLOT(quit()));
-            connect(capturer, SIGNAL(finished(QString)), SLOT(recordingStopped(QString)));
-            connect(stopButton, SIGNAL(clicked()), capturer, SLOT(finish()));
-            capturerRunners.push_back(capturerRunner);
+                connect(capturer, SIGNAL(initialization(QString)), SLOT(cameraInit(QString)));
+                connect(capturer, SIGNAL(started(QString)), SLOT(recordingStarted(QString)));
+                connect(capturer, SIGNAL(finished(QString)), capturerRunner, SLOT(quit()));
+                connect(capturer, SIGNAL(finished(QString)), SLOT(recordingStopped(QString)));
+                connect(stopButton, SIGNAL(clicked()), capturer, SLOT(finish()));
+                capturerRunners.push_back(capturerRunner);
+            }
         }
     }
 }
 
+void Recorder::cameraInit(QString msg) {
+    appendToLogView(msg);
+}
+
+void Recorder::startRecording() {
+    for(int i=0; i<capturerRunners.size(); i++) {
+        capturerRunners[i]->start();
+    }
+}
 
 void Recorder::recordingStarted(QString msg) {
     status = Status::RECORDING;

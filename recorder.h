@@ -26,7 +26,8 @@ public:
 
 private slots:
     void cameraDetected();
-//    void startRecording();
+    void cameraInit(QString msg);
+    void startRecording();
     void recordingStarted(QString msg);
     void recordingStopped(QString msg);
 

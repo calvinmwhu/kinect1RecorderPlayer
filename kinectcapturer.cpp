@@ -7,6 +7,7 @@ KinectCapturer::KinectCapturer(int sensorIdx, const CComPtr<INuiSensor> &sensor)
     sensor_(sensor),
     ended(false),
     frame_count_(0){
+    ::InitializeCriticalSection(&m_rep);
     DWORD width = 0;
     DWORD height = 0;
 
@@ -25,7 +26,18 @@ KinectCapturer::KinectCapturer(int sensorIdx, const CComPtr<INuiSensor> &sensor)
 
 }
 
-HRESULT KinectCapturer::initializeSensor() {
+void KinectCapturer::initializeSensor() {
+    qDebug()<<"capturer::initialize get called from: "<<QThread::currentThreadId();
+
+    QString initingMsg;
+    QString initedMsg;
+
+    // initialize sensor
+    initingMsg.sprintf("initializing Camera-%d ... ", sensorIdx_);
+    qDebug()<<initingMsg;
+    emit initialization(initingMsg);
+
+//    // initialization logic:
     COM_RESULT_CHECK(sensor_->NuiInitialize(NUI_INITIALIZE_FLAG_USES_COLOR | NUI_INITIALIZE_FLAG_USES_DEPTH_AND_PLAYER_INDEX));
     COM_RESULT_CHECK(sensor_->NuiGetCoordinateMapper(&mapper_));
     COM_RESULT_CHECK(sensor_->NuiImageStreamOpen(
@@ -33,32 +45,33 @@ HRESULT KinectCapturer::initializeSensor() {
                          cDepthResolution,
                          0,
                          2,
-                         NULL,
+                         nullptr,
                          &m_pDepthStreamHandle));
     COM_RESULT_CHECK(sensor_->NuiImageStreamOpen(
                          NUI_IMAGE_TYPE_COLOR,
                          cColorResolution,
                          0,
                          2,
-                         NULL,
+                         nullptr,
                          &m_pColorStreamHandle));
-    COM_RESULT_CHECK(sensor_->NuiSkeletonTrackingEnable(NULL, NUI_SKELETON_TRACKING_FLAG_ENABLE_IN_NEAR_RANGE));
 
     m_hStopStreamEventThread = CreateEvent(NULL, FALSE, FALSE, NULL);
     m_hLastFrameEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     COM_RESULT_CHECK(sensor_->NuiSetFrameEndEvent(m_hLastFrameEvent, 0));
-    return S_OK;
+
+    initedMsg.sprintf("Camera-%d initialized", sensorIdx_);
+    qDebug()<<initedMsg;
+    emit initialization(initedMsg);
 }
 
 void KinectCapturer::extractFrames() {
     HANDLE events[] = {m_hStopStreamEventThread, m_hLastFrameEvent};
     while(!ended) {
         DWORD ret = WaitForMultipleObjects(ARRAYSIZE(events), events, FALSE, INFINITE);
-//        qDebug()<<"Event: "<<ret;
         if (WAIT_OBJECT_0 == ret)
             break;
         if (WAIT_OBJECT_0 + 1 == ret) {
-            qDebug()<<"get frame: "<<frame_count_;
+//            qDebug()<<"get frame: "<<frame_count_;
             ResetEvent(m_hLastFrameEvent);
 //            convertFrameToPointCloud();
         }
@@ -82,16 +95,24 @@ QString KinectCapturer::connectionStatus(){
         return QString::fromStdString(status);
 }
 
-void KinectCapturer::start() {
-    qDebug()<<"Worker::start get called from: "<<QThread::currentThreadId();
+bool KinectCapturer::connected() {
+    return sensor_->NuiStatus() == S_OK;
+}
 
-    initializeSensor();
+void KinectCapturer::start() {
+    qDebug()<<"capturer::start get called from: "<<QThread::currentThreadId();
     QString startMsg;
-    startMsg.sprintf("Camera-%d recording", sensorIdx_);
     QString endMsg;
-    endMsg.sprintf("Camera-%d stopped recording", sensorIdx_);
+
+//    initializeSensor();
+
+    // begin recording/extracting frames
+    startMsg.sprintf("Camera-%d recording in progress ...", sensorIdx_);
     emit started(startMsg);
     extractFrames();
+
+    // finishing
+    endMsg.sprintf("Camera-%d recording ended", sensorIdx_);
     emit finished(endMsg);
 }
 
@@ -99,7 +120,6 @@ void KinectCapturer::finish() {
     qDebug()<<"Worker::stop get called from?: "<<QThread::currentThreadId();
     ended = true;
 }
-
 
 void KinectCapturer::convertFrameToPointCloud() {
     NUI_IMAGE_FRAME imageFrame;
@@ -169,5 +189,9 @@ void KinectCapturer::convertFrameToPointCloud() {
     memcpy(color_buffer + frame_count_ * 640*480*3, color_frame, 640*480*3);
     memcpy(depth_buffer + frame_count_ * 640*480, depth_frame, 640*480);
     frame_count_++;
+}
+
+void KinectCapturer::cleanUp(){
+    ::DeleteCriticalSection(&m_rep);
 }
 
