@@ -1,6 +1,9 @@
 #include "kinectcapturer.h"
 #include <QCoreApplication>
 #include "opencv2\opencv.hpp"
+#include <string>
+#include <iostream>
+
 
 KinectCapturer::KinectCapturer(int sensorIdx, const CComPtr<INuiSensor> &sensor) :
     sensorIdx_(sensorIdx),
@@ -66,7 +69,7 @@ void KinectCapturer::initializeSensor() {
 
 void KinectCapturer::extractFrames() {
     HANDLE events[] = {m_hStopStreamEventThread, m_hLastFrameEvent};
-    while(!ended) {
+    while(!ended && frame_count_<1000) {
         DWORD ret = WaitForMultipleObjects(ARRAYSIZE(events), events, FALSE, INFINITE);
         if (WAIT_OBJECT_0 == ret)
             break;
@@ -77,6 +80,7 @@ void KinectCapturer::extractFrames() {
         }
         QCoreApplication::processEvents();
     }
+    writeOutput();
 }
 
 QString KinectCapturer::connectionId(){
@@ -107,7 +111,6 @@ void KinectCapturer::start() {
     startMsg.sprintf("Camera-%d recording in progress ...", sensorIdx_);
     emit started(startMsg);
     extractFrames();
-
     // finishing
     endMsg.sprintf("Camera-%d recording ended", sensorIdx_);
     emit finished(endMsg);
@@ -116,6 +119,16 @@ void KinectCapturer::start() {
 void KinectCapturer::finish() {
     qDebug()<<"Worker::stop get called from?: "<<QThread::currentThreadId();
     ended = true;
+}
+
+void KinectCapturer::writeOutput() {
+    std::string FILE_PREFIX("C:\\data\\new_data\\");
+    for (int i = 0; i< frame_count_; i++){
+      cv::Mat color_image = cv::Mat(KinectCapturer::m_colorHeight, KinectCapturer::m_colorWidth, CV_8UC3, KinectCapturer::color_buffer + i * 640*480*3, cv::Mat::AUTO_STEP);
+      cv::Mat depth_image = cv::Mat(KinectCapturer::m_depthHeight, KinectCapturer::m_depthWidth, CV_8UC1, KinectCapturer::depth_buffer + i * 640*480, cv::Mat::AUTO_STEP);
+      cv::imwrite(FILE_PREFIX + "depth_frame_"+ std::to_string(static_cast<unsigned long long>(sensorIdx_)) +"\\" + std::to_string(static_cast<unsigned long long>(i)) + ".jpg", depth_image);
+      cv::imwrite(FILE_PREFIX + "color_frame_"+ std::to_string(static_cast<unsigned long long>(sensorIdx_)) +"\\" + std::to_string(static_cast<unsigned long long>(i)) + ".jpg", color_image);
+    }
 }
 
 void KinectCapturer::convertFrameToPointCloud() {

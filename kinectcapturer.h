@@ -46,6 +46,7 @@ public slots:
 private:
     void	convertFrameToPointCloud();
     void    extractFrames();
+    void writeOutput();
     void	cleanUp();
 
 private:
