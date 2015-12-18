@@ -36,13 +36,15 @@ public slots:
     void finish();
 
 private:
+    void	convertFrameToPointCloud();
     HRESULT initializeSensor();
-    HRESULT	convertFrameToPointCloud();
+    void extractFrames();
 
 private:
     int sensorIdx_;
     CComPtr<INuiSensor> sensor_;
     bool ended;
+    long long frame_count_;
 
     CComPtr<INuiCoordinateMapper> mapper_;
     HANDLE                  m_pDepthStreamHandle;
@@ -58,11 +60,10 @@ private:
     LONG                    m_colorWidth;
     LONG                    m_colorHeight;
 
-    std::vector<BYTE> *color_frame;
-    std::vector<BYTE> *depth_frame;
-    std::vector<BYTE> *color_buffer;
-    std::vector<BYTE> *depth_buffer;
-
+    BYTE *color_frame;
+    BYTE *depth_frame;
+    BYTE *color_buffer;
+    BYTE *depth_buffer;
 };
 
 #endif // KINECTCAPTURER

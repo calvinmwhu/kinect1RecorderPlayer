@@ -91,14 +91,6 @@ void Recorder::cameraDetected() {
     }
 }
 
-//void Recorder::startRecording() {
-//    qDebug()<<"From main thread: "<<QThread::currentThreadId();
-//    for(int i=0; i<capturerRunners.size(); i++) {
-//        capturerRunners[i]->start();
-//    }
-//    status = Status::RECORDING;
-//    statusUpdated();
-//}
 
 void Recorder::recordingStarted(QString msg) {
     status = Status::RECORDING;
