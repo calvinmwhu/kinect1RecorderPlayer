@@ -21,7 +21,7 @@ public:
 
     static const NUI_IMAGE_RESOLUTION   cDepthResolution = NUI_IMAGE_RESOLUTION_640x480;
     static const NUI_IMAGE_RESOLUTION   cColorResolution = NUI_IMAGE_RESOLUTION_640x480;
-    static const long long num_frames  = 1000;
+    static const long long num_frames  = 100;
 
     KinectCapturer(int sensorIdx, const CComPtr<INuiSensor>& sensor);
     QString connectionId();

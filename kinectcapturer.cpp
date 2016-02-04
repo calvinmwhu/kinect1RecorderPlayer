@@ -69,7 +69,7 @@ void KinectCapturer::initializeSensor() {
 
 void KinectCapturer::extractFrames() {
     HANDLE events[] = {m_hStopStreamEventThread, m_hLastFrameEvent};
-    while(!ended && frame_count_<1000) {
+    while(!ended && frame_count_<num_frames) {
 //        qDebug()<<"new command1  \n ";
 
         DWORD ret = WaitForMultipleObjects(ARRAYSIZE(events), events, FALSE, INFINITE);
@@ -126,9 +126,10 @@ void KinectCapturer::finish() {
 }
 
 void KinectCapturer::writeOutput() {
-    std::string FILE_PREFIX("C:\\data\\new_data\\");
+    std::string FILE_PREFIX="C:\\data\\new_data";
+    qDebug()<<"frames location: "<<QString::fromStdString(FILE_PREFIX);
     for (int i = 0; i< frame_count_; i++){
-      qDebug()<<"capturer: outputing frame "<<i;
+      // qDebug()<<"capturer: outputing frame "<<i;
       cv::Mat color_image = cv::Mat(KinectCapturer::m_colorHeight, KinectCapturer::m_colorWidth, CV_8UC3, KinectCapturer::color_buffer + i * 640*480*3, cv::Mat::AUTO_STEP);
       cv::Mat depth_image = cv::Mat(KinectCapturer::m_depthHeight, KinectCapturer::m_depthWidth, CV_8UC1, KinectCapturer::depth_buffer + i * 640*480, cv::Mat::AUTO_STEP);
       cv::imwrite(FILE_PREFIX + "depth_frame_"+ std::to_string(static_cast<unsigned long long>(sensorIdx_)) +"\\" + std::to_string(static_cast<unsigned long long>(i)) + ".jpg", depth_image);

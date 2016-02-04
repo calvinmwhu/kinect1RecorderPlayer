@@ -8,7 +8,7 @@ Kinect1RecoderPlayer::Kinect1RecoderPlayer(QWidget *parent)
     : QMainWindow(parent) {
     tabWidget = new QTabWidget;
     tabWidget->addTab(new Recorder(), tr("Recorder"));
-    tabWidget->addTab(new Player(), tr("Player"));
+//    tabWidget->addTab(new Player(), tr("Player"));
 
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
