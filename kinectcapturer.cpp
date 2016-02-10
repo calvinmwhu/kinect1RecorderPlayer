@@ -78,7 +78,7 @@ void KinectCapturer::extractFrames() {
         if (WAIT_OBJECT_0 == ret)
             break;
         if (WAIT_OBJECT_0 + 1 == ret) {
-            qDebug()<<"get frame: "<<frame_count_;
+//            qDebug()<<"get frame: "<<frame_count_;
             ResetEvent(m_hLastFrameEvent);
             convertFrameToPointCloud();
         }
@@ -126,10 +126,12 @@ void KinectCapturer::finish() {
 }
 
 void KinectCapturer::writeOutput() {
-    std::string FILE_PREFIX="C:\\data\\new_data";
+    std::string FILE_PREFIX="C:\\data\\new_data\\";
     qDebug()<<"frames location: "<<QString::fromStdString(FILE_PREFIX);
     for (int i = 0; i< frame_count_; i++){
-      // qDebug()<<"capturer: outputing frame "<<i;
+//       qDebug()<<"capturer: outputing frame "<<i;
+       std::string filename = FILE_PREFIX + "depth_frame_"+ std::to_string(static_cast<unsigned long long>(sensorIdx_));
+//       qDebug()<<"filename "<<filename;
       cv::Mat color_image = cv::Mat(KinectCapturer::m_colorHeight, KinectCapturer::m_colorWidth, CV_8UC3, KinectCapturer::color_buffer + i * 640*480*3, cv::Mat::AUTO_STEP);
       cv::Mat depth_image = cv::Mat(KinectCapturer::m_depthHeight, KinectCapturer::m_depthWidth, CV_8UC1, KinectCapturer::depth_buffer + i * 640*480, cv::Mat::AUTO_STEP);
       cv::imwrite(FILE_PREFIX + "depth_frame_"+ std::to_string(static_cast<unsigned long long>(sensorIdx_)) +"\\" + std::to_string(static_cast<unsigned long long>(i)) + ".jpg", depth_image);
