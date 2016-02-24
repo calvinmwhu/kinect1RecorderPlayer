@@ -13,7 +13,9 @@ Kinect1RecoderPlayer::Kinect1RecoderPlayer(QWidget *parent)
     QVBoxLayout *mainLayout = new QVBoxLayout();
 
     mainLayout->addWidget(tabWidget);
+
     QWidget *window = new QWidget();
+    this->setFixedSize(640,480);
     window->setLayout(mainLayout);
     setCentralWidget(window);
 
