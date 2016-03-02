@@ -30,6 +30,7 @@ private slots:
     void startRecording();
     void recordingStarted(QString msg);
     void recordingStopped(QString msg);
+    void frameSavedToDisk(QString msg);
 
 private:
     QPushButton* detectCameraButton;

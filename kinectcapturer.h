@@ -39,6 +39,7 @@ signals:
     void initialization(QString msg);
     void started(QString msg);
     void finished(QString msg);
+    void frameSavedToDisk(QString msg);
 
 public slots:
     void start();
@@ -76,7 +77,7 @@ private:
     BYTE *depth_frame;
     BYTE *color_buffer;
     BYTE *depth_buffer;
-    std::queue<std::string> skeletonQueue;
+    std::queue<std::string> skeletonQueue_;
 
 };
 

@@ -1,4 +1,5 @@
 #include "kinectcapturer.h"
+#include <QTextStream>
 #include <QCoreApplication>
 #include "opencv2\opencv.hpp"
 
@@ -120,17 +121,38 @@ void KinectCapturer::finish() {
 }
 
 void KinectCapturer::writeOutput() {
-    std::string FILE_PREFIX="C:\\KinectProjects\\Kinect1RecorderPlayer\\data\\";
-    qDebug()<<"frames location: "<<QString::fromStdString(FILE_PREFIX);
+    qDebug()<<"frames location: "<<QString::fromStdString(filePath_);
+    QString msg;
+
+
+    // save color and depth data
     for (int i = 0; i< frame_count_; i++){
 //       qDebug()<<"capturer: outputing frame "<<i;
-       std::string filename = FILE_PREFIX + "depth_frame_"+ std::to_string(static_cast<unsigned long long>(sensorIdx_));
-//       qDebug()<<"filename "<<filename;
+       std::string filename = filePath_ + "depth_frame_"+ std::to_string(static_cast<unsigned long long>(sensorIdx_));
       cv::Mat color_image = cv::Mat(KinectCapturer::m_colorHeight, KinectCapturer::m_colorWidth, CV_8UC3, KinectCapturer::color_buffer + i * 640*480*3, cv::Mat::AUTO_STEP);
       cv::Mat depth_image = cv::Mat(KinectCapturer::m_depthHeight, KinectCapturer::m_depthWidth, CV_8UC1, KinectCapturer::depth_buffer + i * 640*480, cv::Mat::AUTO_STEP);
-      cv::imwrite(FILE_PREFIX + "depth_frame_"+ std::to_string(static_cast<unsigned long long>(sensorIdx_)) +"\\" + std::to_string(static_cast<unsigned long long>(i)) + ".jpg", depth_image);
-      cv::imwrite(FILE_PREFIX + "color_frame_"+ std::to_string(static_cast<unsigned long long>(sensorIdx_)) +"\\" + std::to_string(static_cast<unsigned long long>(i)) + ".jpg", color_image);
+      cv::imwrite(filePath_ + "depth_frame_"+ std::to_string(static_cast<unsigned long long>(sensorIdx_)) +"\\" + std::to_string(static_cast<unsigned long long>(i)) + ".jpg", depth_image);
+      cv::imwrite(filePath_ + "color_frame_"+ std::to_string(static_cast<unsigned long long>(sensorIdx_)) +"\\" + std::to_string(static_cast<unsigned long long>(i)) + ".jpg", color_image);
     }
+    QTextStream(&msg) << "Camera-" <<sensorIdx_<<" frames saved to "<<QString::fromStdString(filePath_);
+
+    // save skeleton data
+    qDebug()<< "saving skeleton data...";
+    int j = 0;
+    while (!skeletonQueue_.empty()) {
+        std::string fileName(filePath_);
+        fileName += "skeleton_"+ std::to_string(static_cast<unsigned long long>(sensorIdx_)) +"\\";
+        fileName += std::to_string(static_cast<unsigned long long>(j));
+        fileName += ".json";
+        std::ofstream myfile;
+        myfile.open(fileName.c_str());
+        myfile << skeletonQueue_.front() << endl;
+        myfile.close();
+        skeletonQueue_.pop();
+        j++;
+    }
+
+    emit frameSavedToDisk(msg);
 }
 
 void KinectCapturer::convertFrameToPointCloud() {
@@ -196,7 +218,7 @@ void KinectCapturer::convertFrameToPointCloud() {
     rapidjson::StringBuffer s;
     rapidjson::Writer<rapidjson::StringBuffer> writer(s);
     writeSkeletonToJSON(pSkeletonData, writer);
-    skeletonQueue.push(s.GetString());
+    skeletonQueue_.push(s.GetString());
 
     memcpy(color_buffer + frame_count_ * 640*480*3, color_frame, 640*480*3);
     memcpy(depth_buffer + frame_count_ * 640*480, depth_frame, 640*480);

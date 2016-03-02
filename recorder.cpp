@@ -86,6 +86,7 @@ void Recorder::cameraDetected() {
                 connect(capturer, SIGNAL(started(QString)), SLOT(recordingStarted(QString)));
                 connect(capturer, SIGNAL(finished(QString)), capturerRunner, SLOT(quit()));
                 connect(capturer, SIGNAL(finished(QString)), SLOT(recordingStopped(QString)));
+                connect(capturer, SIGNAL(frameSavedToDisk(QString)), SLOT(frameSavedToDisk(QString)));
                 connect(stopButton, SIGNAL(clicked()), capturer, SLOT(finish()));
                 connect(capturerRunner, SIGNAL(started()), capturer, SLOT(start()));
 
@@ -117,6 +118,13 @@ void Recorder::recordingStopped(QString msg) {
     status = Status::STOPPING;
     statusUpdated();
 }
+
+void Recorder::frameSavedToDisk(QString msg) {
+     appendToLogView(msg);
+     status = Status::COMPRESSING;
+     statusUpdated();
+}
+
 
 void Recorder::clearLogView() {
     logView->model()->removeRows(0, logView->model()->rowCount());
