@@ -26,7 +26,8 @@ SOURCES += main.cpp\
     recorder.cpp \
     kinectdetector.cpp \
 #    comutilities.cpp
-    kinectcapturer.cpp
+    kinectcapturer.cpp \
+    framecompressor.cpp
 
 HEADERS  += kinect1recoderplayer.h \
     histogramwidget.h \
@@ -65,7 +66,8 @@ HEADERS  += kinect1recoderplayer.h \
     recorder.h \
     kinectdetector.h \
     comutilities.h \
-    kinectcapturer.h
+    kinectcapturer.h \
+    framecompressor.h
    # stringconverter.h
 
 win32:CONFIG(release, debug|release): LIBS += "C:/Program Files/Microsoft SDKs/Kinect/v1.8/lib/amd64/Kinect10.lib"

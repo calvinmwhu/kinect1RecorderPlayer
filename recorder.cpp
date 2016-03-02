@@ -5,7 +5,12 @@
 #include <QStringList>
 #include <QStringListModel>
 
+#include <climits>
+#include <algorithm>    // std::min
+
+
 #include "recorder.h"
+#include "framecompressor.h"
 
 Recorder::Recorder(QWidget *parent)
     : QWidget(parent)
@@ -50,6 +55,8 @@ Recorder::Recorder(QWidget *parent)
     status = Status::DETECTING;
     statusUpdated();
 
+    numFrames_ = ULONG_MAX;
+
 }
 
 void Recorder::cameraDetected() {
@@ -84,9 +91,9 @@ void Recorder::cameraDetected() {
                 capturer->moveToThread(capturerRunner);
                 connect(capturer, SIGNAL(initialization(QString)), SLOT(cameraInit(QString)));
                 connect(capturer, SIGNAL(started(QString)), SLOT(recordingStarted(QString)));
-                connect(capturer, SIGNAL(finished(QString)), capturerRunner, SLOT(quit()));
-                connect(capturer, SIGNAL(finished(QString)), SLOT(recordingStopped(QString)));
-                connect(capturer, SIGNAL(frameSavedToDisk(QString)), SLOT(frameSavedToDisk(QString)));
+                connect(capturer, SIGNAL(finished(QString, unsigned long)), capturerRunner, SLOT(quit()));
+                connect(capturer, SIGNAL(finished(QString, unsigned long)), SLOT(recordingStopped(QString, unsigned long)));
+                connect(capturer, SIGNAL(frameSavedToDisk(QString, int)), SLOT(frameSavedToDisk(QString, int)));
                 connect(stopButton, SIGNAL(clicked()), capturer, SLOT(finish()));
                 connect(capturerRunner, SIGNAL(started()), capturer, SLOT(start()));
 
@@ -112,19 +119,20 @@ void Recorder::recordingStarted(QString msg) {
     appendToLogView(msg);
 }
 
-void Recorder::recordingStopped(QString msg) {
+void Recorder::recordingStopped(QString msg, unsigned long numFrames) {
 //    qDebug()<<"From main thread: "<<QThread::currentThreadId();
+    numFrames_ = std::min(numFrames, numFrames_);
     appendToLogView(msg);
     status = Status::STOPPING;
     statusUpdated();
 }
 
-void Recorder::frameSavedToDisk(QString msg) {
+void Recorder::frameSavedToDisk(QString msg, int sensorIdx) {
      appendToLogView(msg);
      status = Status::COMPRESSING;
      statusUpdated();
+     frameCompressors_.push_back(new FrameCompressor(numFrames_, sensorIdx));
 }
-
 
 void Recorder::clearLogView() {
     logView->model()->removeRows(0, logView->model()->rowCount());

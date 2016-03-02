@@ -38,8 +38,8 @@ public:
 signals:
     void initialization(QString msg);
     void started(QString msg);
-    void finished(QString msg);
-    void frameSavedToDisk(QString msg);
+    void finished(QString msg, unsigned long frameCount);
+    void frameSavedToDisk(QString msg, int sensorIdx);
 
 public slots:
     void start();
@@ -57,7 +57,7 @@ private:
     int sensorIdx_;
     CComPtr<INuiSensor> sensor_;
     bool ended;
-    long long frame_count_;
+    unsigned long frame_count_;
 
     CComPtr<INuiCoordinateMapper> mapper_;
     HANDLE                  m_pDepthStreamHandle;

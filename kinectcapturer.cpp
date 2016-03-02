@@ -65,11 +65,7 @@ void KinectCapturer::initializeSensor() {
 void KinectCapturer::extractFrames() {
     HANDLE events[] = {m_hStopStreamEventThread, m_hLastFrameEvent};
     while(!ended && frame_count_<num_frames) {
-//        qDebug()<<"new command1  \n ";
-
         DWORD ret = WaitForMultipleObjects(ARRAYSIZE(events), events, FALSE, INFINITE);
-//        qDebug()<<"new command2  \n ";
-
         if (WAIT_OBJECT_0 == ret)
             break;
         if (WAIT_OBJECT_0 + 1 == ret) {
@@ -111,8 +107,8 @@ void KinectCapturer::start() {
     emit started(startMsg);
     extractFrames();
     // finishing
-    endMsg.sprintf("Camera-%d recording ended", sensorIdx_);
-    emit finished(endMsg);
+    endMsg.sprintf("Camera-%d recording ended, %ld frames captured", sensorIdx_, frame_count_);
+    emit finished(endMsg, frame_count_);
 }
 
 void KinectCapturer::finish() {
@@ -123,10 +119,8 @@ void KinectCapturer::finish() {
 void KinectCapturer::writeOutput() {
     qDebug()<<"frames location: "<<QString::fromStdString(filePath_);
     QString msg;
-
-
     // save color and depth data
-    for (int i = 0; i< frame_count_; i++){
+    for (size_t i = 0; i< frame_count_; i++){
 //       qDebug()<<"capturer: outputing frame "<<i;
        std::string filename = filePath_ + "depth_frame_"+ std::to_string(static_cast<unsigned long long>(sensorIdx_));
       cv::Mat color_image = cv::Mat(KinectCapturer::m_colorHeight, KinectCapturer::m_colorWidth, CV_8UC3, KinectCapturer::color_buffer + i * 640*480*3, cv::Mat::AUTO_STEP);
@@ -134,7 +128,7 @@ void KinectCapturer::writeOutput() {
       cv::imwrite(filePath_ + "depth_frame_"+ std::to_string(static_cast<unsigned long long>(sensorIdx_)) +"\\" + std::to_string(static_cast<unsigned long long>(i)) + ".jpg", depth_image);
       cv::imwrite(filePath_ + "color_frame_"+ std::to_string(static_cast<unsigned long long>(sensorIdx_)) +"\\" + std::to_string(static_cast<unsigned long long>(i)) + ".jpg", color_image);
     }
-    QTextStream(&msg) << "Camera-" <<sensorIdx_<<" frames saved to "<<QString::fromStdString(filePath_);
+    QTextStream(&msg) << "Camera-" <<sensorIdx_<<" saved "<< frame_count_ <<" frames to "<<QString::fromStdString(filePath_);
 
     // save skeleton data
     qDebug()<< "saving skeleton data...";
@@ -151,8 +145,7 @@ void KinectCapturer::writeOutput() {
         skeletonQueue_.pop();
         j++;
     }
-
-    emit frameSavedToDisk(msg);
+    emit frameSavedToDisk(msg, sensorIdx_);
 }
 
 void KinectCapturer::convertFrameToPointCloud() {

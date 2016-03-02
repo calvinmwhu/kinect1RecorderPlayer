@@ -6,6 +6,7 @@
 #include <QString>
 #include <QThread>
 #include "kinectdetector.h"
+#include "framecompressor.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -29,8 +30,8 @@ private slots:
     void cameraInit(QString msg);
     void startRecording();
     void recordingStarted(QString msg);
-    void recordingStopped(QString msg);
-    void frameSavedToDisk(QString msg);
+    void recordingStopped(QString msg, unsigned long numFrames);
+    void frameSavedToDisk(QString msg, int sensorIdx);
 
 private:
     QPushButton* detectCameraButton;
@@ -39,9 +40,10 @@ private:
     QPushButton* uploadButton;
     QListView* logView;
     KinectDetector *kinectDetector_;
-    KinectCapturer *kinectCapturer_;
     QVector<QThread*> capturerRunners;
+    QVector<FrameCompressor*> frameCompressors_;
     Status status;
+    unsigned long numFrames_;
 
 private:
     void clearLogView();
