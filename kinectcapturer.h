@@ -7,9 +7,15 @@
 #include <atlbase.h>
 #include <iostream>
 #include <vector>
+#include <queue>
+#include <string>
 #include "NuiApi.h"
 #include "comutilities.h"
 #include "AtlConv.h"
+
+#include "rapidjson/prettywriter.h" // for stringify JSON
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/filestream.h"   // wrapper of C stream for prettywriter as output
 
 typedef std::vector<BYTE> VBYTE;
 
@@ -21,18 +27,13 @@ public:
 
     static const NUI_IMAGE_RESOLUTION   cDepthResolution = NUI_IMAGE_RESOLUTION_640x480;
     static const NUI_IMAGE_RESOLUTION   cColorResolution = NUI_IMAGE_RESOLUTION_640x480;
-    static const long long num_frames  = 1000;
+    static const long long num_frames  = 100;
 
     KinectCapturer(int sensorIdx, const CComPtr<INuiSensor>& sensor);
     QString connectionId();
     QString connectionStatus();
     bool connected();
     void initializeSensor();
-
-    void enter()
-        { ::EnterCriticalSection(&m_rep); }
-    void leave()
-        { ::LeaveCriticalSection(&m_rep); }
 
 signals:
     void initialization(QString msg);
@@ -44,12 +45,14 @@ public slots:
     void finish();
 
 private:
-    void	convertFrameToPointCloud();
-    void    extractFrames();
+    void convertFrameToPointCloud();
+    void extractFrames();
+    void writeSkeletonToJSON(NUI_SKELETON_DATA* skeleton, rapidjson::Writer<rapidjson::StringBuffer>& w );
     void writeOutput();
-    void	cleanUp();
+    void cleanUp();
 
 private:
+    std::string filePath_;
     int sensorIdx_;
     CComPtr<INuiSensor> sensor_;
     bool ended;
@@ -73,9 +76,8 @@ private:
     BYTE *depth_frame;
     BYTE *color_buffer;
     BYTE *depth_buffer;
+    std::queue<std::string> skeletonQueue;
 
-    // synchronization
-    CRITICAL_SECTION m_rep;
 };
 
 #endif // KINECTCAPTURER

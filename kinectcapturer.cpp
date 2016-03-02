@@ -1,16 +1,13 @@
 #include "kinectcapturer.h"
 #include <QCoreApplication>
 #include "opencv2\opencv.hpp"
-#include <string>
-#include <iostream>
-
 
 KinectCapturer::KinectCapturer(int sensorIdx, const CComPtr<INuiSensor> &sensor) :
+    filePath_("C:\\KinectProjects\\Kinect1RecorderPlayer\\data\\"),
     sensorIdx_(sensorIdx),
     sensor_(sensor),
     ended(false),
     frame_count_(0){
-    ::InitializeCriticalSection(&m_rep);
     DWORD width = 0;
     DWORD height = 0;
 
@@ -38,8 +35,6 @@ void KinectCapturer::initializeSensor() {
     // initialize sensor
     initingMsg.sprintf("initializing Camera-%d ... ", sensorIdx_);
     qDebug()<<initingMsg;
-//    emit initialization(initingMsg);
-
 //    // initialization logic:
     COM_RESULT_CHECK(sensor_->NuiInitialize(NUI_INITIALIZE_FLAG_USES_COLOR | NUI_INITIALIZE_FLAG_USES_DEPTH_AND_PLAYER_INDEX));
     COM_RESULT_CHECK(sensor_->NuiGetCoordinateMapper(&mapper_));
@@ -64,7 +59,6 @@ void KinectCapturer::initializeSensor() {
 
     initedMsg.sprintf("Camera-%d initialized", sensorIdx_);
     qDebug()<<initedMsg;
-//    emit initialization(initedMsg);
 }
 
 void KinectCapturer::extractFrames() {
@@ -126,7 +120,7 @@ void KinectCapturer::finish() {
 }
 
 void KinectCapturer::writeOutput() {
-    std::string FILE_PREFIX="C:\\data\\new_data\\";
+    std::string FILE_PREFIX="C:\\KinectProjects\\Kinect1RecorderPlayer\\data\\";
     qDebug()<<"frames location: "<<QString::fromStdString(FILE_PREFIX);
     for (int i = 0; i< frame_count_; i++){
 //       qDebug()<<"capturer: outputing frame "<<i;
@@ -198,18 +192,51 @@ void KinectCapturer::convertFrameToPointCloud() {
     COM_RESULT_CHECK(sensor_->NuiImageStreamReleaseFrame(m_pDepthStreamHandle, &depthFrame));
 
 // will figure out a way to better represent skeleton data
-//    NUI_SKELETON_DATA* pSkeletonData = skeletonFrame.SkeletonData;
-//    StringBuffer s;
-//    Writer<StringBuffer> writer(s);
-//    write_skeleton_to_json(pSkeletonData, writer);
-//    qqq.push(s.GetString());
+    NUI_SKELETON_DATA* pSkeletonData = skeletonFrame.SkeletonData;
+    rapidjson::StringBuffer s;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(s);
+    writeSkeletonToJSON(pSkeletonData, writer);
+    skeletonQueue.push(s.GetString());
 
     memcpy(color_buffer + frame_count_ * 640*480*3, color_frame, 640*480*3);
     memcpy(depth_buffer + frame_count_ * 640*480, depth_frame, 640*480);
     frame_count_++;
 }
 
+void KinectCapturer::writeSkeletonToJSON(NUI_SKELETON_DATA* skeleton, rapidjson::Writer<rapidjson::StringBuffer>& w ) {
+    w.StartObject();
+    w.String("eTrackingState");
+    w.Uint(skeleton->eTrackingState);
+    w.String("dwTrackingID");
+    w.Uint(skeleton->dwTrackingID);
+    w.String("dwEnrollmentIndex");
+    w.Uint(skeleton->dwEnrollmentIndex);
+    w.String("Position");
+    w.StartArray();
+    w.Double(skeleton->Position.x);
+    w.Double(skeleton->Position.y);
+    w.Double(skeleton->Position.z);
+    w.EndArray();
+    w.String("SkeletonPositions");
+    w.StartArray();
+    for (int i =0; i!=NUI_SKELETON_POSITION_COUNT; i++) {
+        w.StartArray();
+        w.Double(skeleton->SkeletonPositions[i].x);
+        w.Double(skeleton->SkeletonPositions[i].y);
+        w.Double(skeleton->SkeletonPositions[i].z);
+        w.EndArray();
+    }
+    w.EndArray();
+    w.String("eSkeletonPositionTrackingState");
+    w.StartArray();
+    for (int i =0; i!=NUI_SKELETON_POSITION_COUNT; i++) {
+        w.Uint(skeleton->eSkeletonPositionTrackingState[i]);
+    }
+    w.EndArray();
+    w.EndObject();
+}
+
+
 void KinectCapturer::cleanUp(){
-    ::DeleteCriticalSection(&m_rep);
 }
 
