@@ -108,6 +108,8 @@ void Recorder::cameraInit(QString msg) {
 }
 
 void Recorder::startRecording() {
+//    appendToLogView("Recording starts in 3 seconds...");
+    QThread::sleep(3);
     for(int i=0; i<capturerRunners.size(); i++) {
         capturerRunners[i]->start();
     }
