@@ -35,7 +35,7 @@ void FrameCompressor::compress(){
       QString cmd_depth = QString("ffmpeg -framerate 30 -i %1\\%d.jpg -c:v libx264 -pix_fmt yuv420p -b 2000k %2 -y")
             .arg(depthDir_, compressToDes_depth);
 
-      QString cmd_combine = QString("ffmpeg -i %1 -i %2 -filter_complex \"[0:v]pad=iw*2:ih[int];[int][1:v]overlay=W/2:0[vid]\" -map [vid] -c:v libx264 -crf 23 -preset veryfast %3 -y")
+      QString cmd_combine = QString("ffmpeg -i %1 -i %2 -filter_complex \"[0:v]pad=iw*2:ih[int];[int][1:v]overlay=W/2:0[vid]\" -map [vid] -c:v libx264 -b:v 2000k -preset veryfast %3 -y")
               .arg(compressToDes_color, compressToDes_depth, compressToDes_);
 
       system(cmd_color.toStdString().c_str());
