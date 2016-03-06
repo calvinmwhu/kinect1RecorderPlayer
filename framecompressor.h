@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <string>
-
+#include <QString>
 
 class FrameCompressor{
 
@@ -15,10 +15,12 @@ public:
 private:
     const unsigned long numFrames_;
     const int sensorIdx_;
-    const std::string filePath_;
-    std::string compressToDes_;
-    std::string colorDir_;
-    std::string depthDir_;
+    QString filePath_;
+    QString compressToDes_;
+    QString compressToDes_depth;
+    QString compressToDes_color;
+    QString colorDir_;
+    QString depthDir_;
 
 };
 
